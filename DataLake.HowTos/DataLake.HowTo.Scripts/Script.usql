@@ -1,0 +1,33 @@
+﻿@searchlog =
+    EXTRACT 
+        f1 int,
+        f2 int,
+        SomeDate DateTime,
+        SomeValue1 decimal,
+        SomeValue2 decimal,
+        AnotherInteger int,
+        SomeCode string,
+        SomeFlag byte?
+    FROM "/mynewfolder/vehicle1_09142014.csv"
+    USING Extractors.Csv();
+
+@rs1 =
+    SELECT f1,f2,SomeDate,SomeValue1,SomeValue2,AnotherInteger,SomeCode,SomeFlag
+    FROM @searchlog
+WHERE SomeFlag != null;
+
+@rs2 =
+    SELECT f1,f2,SomeDate,SomeValue1,SomeValue2,SUM(AnotherInteger) AS SomeAgg
+    FROM @searchlog
+WHERE SomeFlag != null
+GROUP BY f1,f2,SomeDate,SomeValue1,SomeValue2;
+
+
+OUTPUT @rs1   
+    TO "/mynewfolder/someshit1.csv"
+    USING Outputters.Csv();
+
+OUTPUT @rs2   
+    TO "/mynewfolder/someshit2.csv"
+    ORDER BY SomeAgg DESC
+    USING Outputters.Csv();

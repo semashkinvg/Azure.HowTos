@@ -1,0 +1,5 @@
+.vs/
+*.DotSettings.user
+bin/
+obj/
+*.usqlproj.user
