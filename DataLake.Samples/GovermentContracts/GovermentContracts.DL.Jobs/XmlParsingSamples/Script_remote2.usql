@@ -1,0 +1,130 @@
+﻿// an exmaple of xml parsing with Microsoft.Analytics.Samples.Formats
+REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
+
+DECLARE @namespaces = new SQL.MAP<string, string>{
+          {"ns2", "http://zakupki.gov.ru/oos/export/1"},
+          {"ns3", "http://zakupki.gov.ru/oos/printform/1"},
+          {"ns4", "http://zakupki.gov.ru/oos/control99/1"},
+          {"x", "http://zakupki.gov.ru/oos/types/1"}
+          };
+
+
+@xml =
+    EXTRACT Id string,
+            ExternalId string,
+            PublishDate string,
+            VersionNumber string,
+            
+            CustomerRegNum string,
+            CustomerFullName string,
+            CustomerInn string,
+            CustomerKpp string,
+            
+            ProtocolDate string,
+            DocumentCode string,
+            SignDate string,
+            RegistrationNumber string,
+            Number string,
+            
+            Price string,
+            Products string
+    FROM @"/mynewfolder/Samarskaja_obl/bigFile3.xml"
+    USING new Microsoft.Analytics.Samples.Formats.Xml.XmlDomExtractor("contract",
+          new SQL.MAP<string, string>{
+          {"id", "Id"},
+          {"externalId", "ExternalId"},
+          {"publishDate", "PublishDate"},
+          {"versionNumber", "VersionNumber"},
+                                         
+          {"customer/regNum", "CustomerRegNum"},
+          {"customer/fullName", "CustomerFullName"},
+          {"customer/inn", "CustomerInn"},
+          {"customer/kpp", "CustomerKpp"},
+                                         
+          {"protocolDate", "ProtocolDate"},
+          {"documentCode", "DocumentCode"},
+          {"signDate", "SignDate"},
+          {"regNum", "RegistrationNumber"},
+          {"number", "Number"},
+          {"priceInfo/price", "Price"},
+          {"products", "Products"}
+          });
+
+@prepareData =
+    SELECT c.Id,
+            c.ExternalId,
+            c.PublishDate,
+            c.VersionNumber,
+            
+            c.CustomerRegNum,
+            c.CustomerFullName,
+            c.CustomerInn,
+            c.CustomerKpp,
+            
+            c.ProtocolDate,
+            c.DocumentCode,
+            c.SignDate,
+            c.RegistrationNumber,
+            c.Number,
+            
+            Price,
+           "<abc>"+c.Products+"</abc>" AS Products
+    FROM @xml AS c;
+
+@data =
+SELECT c.Id,
+            c.ExternalId,
+            c.PublishDate,
+            c.VersionNumber,
+            
+            c.CustomerRegNum,
+            c.CustomerFullName,
+            c.CustomerInn,
+            c.CustomerKpp,
+            
+            c.ProtocolDate,
+            c.DocumentCode,
+            c.SignDate,
+            c.RegistrationNumber,
+            c.Number,
+            
+            Price,
+            pp.ProductSid, 
+            pp.ProductOKPDCode ?? pp.ProductOKPDCode AS ProductOKPDCode, 
+            pp.ProductOKPDName ?? pp.ProductOKPDName AS ProductOKPDName, 
+            pp.ProductName, 
+            pp.ProductOKEICode, 
+            pp.ProductOKEINationalCode, 
+            pp.ProductPrice, 
+            pp.ProductQuantity, 
+            pp.ProductSum
+        FROM @prepareData AS c
+        OUTER APPLY
+            new Microsoft.Analytics.Samples.Formats.Xml.XmlApplier ("Products","/",new SQL.MAP<string, string>{
+          {"/abc/p/s", "ProductSid"},
+          {"/abc/p/o/c", "ProductOKPDCode"},
+          {"/abc/p/o/n", "ProductOKPDName"},
+          {"/abc/p/o2/c", "ProductOKPD2Code"},
+          {"/abc/p/o2/n", "ProductOKPD2Name"},
+          {"/abc/p/name", "ProductName"},
+          {"/abc/p/ok/c", "ProductOKEICode"},
+          {"/abc/p/ok/nc", "ProductOKEINationalCode"},
+          {"/abc/p/price", "ProductPrice"},
+          {"/abc/p/quantity", "ProductQuantity"},
+          {"/abc/p/sum", "ProductSum"}
+          }) AS pp(
+                ProductSid string, 
+                ProductOKPDCode string, 
+                ProductOKPDName string, 
+                ProductOKPD2Code string, 
+                ProductOKPD2Name string, 
+                ProductName string, 
+                ProductOKEICode string, 
+                ProductOKEINationalCode string, 
+                ProductPrice string, 
+                ProductQuantity string, 
+                ProductSum string);
+
+OUTPUT @data 
+TO @"/mynewfolder/test2.csv" 
+USING Outputters.Csv(outputHeader:true,quoting:true);

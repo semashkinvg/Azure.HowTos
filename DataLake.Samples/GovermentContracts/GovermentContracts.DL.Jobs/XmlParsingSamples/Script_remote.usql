@@ -1,0 +1,123 @@
+﻿REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
+DECLARE @namespaces = new SQL.MAP<string, string>{
+          {"oos", "http://zakupki.gov.ru/oos/types/1"},
+          {"x", "http://zakupki.gov.ru/oos/types/1"}
+          };
+
+@xml =
+    EXTRACT Id string,
+            RegistrationNumber string,
+            Number string,
+            PublishDate string,
+            SignDate string,
+            VersionNumber string,
+            FoundationSingleCustomer string,
+            CustomerRegNum string,
+            CustomerFullName string,
+            CustomerInn string,
+            CustomerKpp string,
+            Price string,
+            Finances string,
+            Products string
+    FROM @"/mynewfolder/bigFile2.xml"
+    USING new Microsoft.Analytics.Samples.Formats.Xml.XmlDomExtractor("x:contract",
+          new SQL.MAP<string, string>{
+          {"oos:id", "Id"},
+          {"oos:regNum", "RegistrationNumber"},
+          {"oos:number", "Number"},
+          {"oos:publishDate", "PublishDate"},
+          {"oos:signDate", "SignDate"},
+          {"oos:versionNumber", "VersionNumber"},
+          {"oos:foundation/oos:singleCustomer", "FoundationSingleCustomer"},
+          {"oos:customer/oos:regNum", "CustomerRegNum"},
+          {"oos:customer/oos:fullName", "CustomerFullName"},
+          {"oos:customer/oos:inn", "CustomerInn"},
+          {"oos:customer/oos:kpp", "CustomerKpp"},
+          {"oos:price", "Price"},
+          {"oos:finances", "Finances"},
+          {"oos:products", "Products"}
+          },@namespaces);
+
+@prepareData =
+    SELECT c.Id,
+           c.RegistrationNumber,
+            c.Number,
+            c.PublishDate,
+            c.SignDate,
+            c.VersionNumber,
+            c.FoundationSingleCustomer,
+            c.CustomerRegNum,
+            c.CustomerFullName,
+            c.CustomerInn,
+            c.CustomerKpp,
+           "<abc>"+c.Finances+"</abc>" AS Finances,
+           "<abc>"+c.Products+"</abc>" AS Products
+    FROM @xml AS c;
+
+@data = SELECT c.Id,
+            c.RegistrationNumber,
+            c.Number,
+            c.PublishDate,
+            c.SignDate,
+            c.VersionNumber,
+            c.FoundationSingleCustomer,
+            c.CustomerRegNum,
+            c.CustomerFullName,
+            c.CustomerInn,
+            c.CustomerKpp,
+            fp.FinanceSource,
+            fp.BudgetLevel,
+            fp.BudgetaryMonth,
+            fp.BudgetaryYear,
+            fp.BudgetarySubstageMonth,
+            fp.BudgetarySubstageYear,
+            fp.BudgetaryKBK,
+            fp.BudgetaryPrice,
+            pp.ProductSid, 
+            pp.ProductOKPDCode, 
+            pp.ProductOKPDName, 
+            pp.ProductName, 
+            pp.ProductOKEICode, 
+            pp.ProductOKEINationalCode, 
+            pp.ProductPrice
+        FROM @prepareData AS c
+        OUTER APPLY
+            new Microsoft.Analytics.Samples.Formats.Xml.XmlApplier ("Finances","/",new SQL.MAP<string, string>{
+          {"/abc/oos:financeSource", "FinanceSource"},
+          {"/abc/oos:budgetLevel", "BudgetLevel"},
+          {"/abc/oos:budgetary/oos:month", "BudgetaryMonth"},
+          {"/abc/oos:budgetary/oos:year", "BudgetaryYear"},
+          {"/abc/oos:budgetary/oos:substageMonth", "BudgetarySubstageMonth"},
+          {"/abc/oos:budgetary/oos:substageYear", "BudgetarySubstageYear"},
+          {"/abc/oos:budgetary/oos:KBK", "BudgetaryKBK"},
+          {"/abc/oos:budgetary/oos:price", "BudgetaryPrice"}
+          },@namespaces) AS fp(
+                FinanceSource string, 
+                BudgetLevel string, 
+                BudgetaryMonth string, 
+                BudgetaryYear string, 
+                BudgetarySubstageMonth string, 
+                BudgetarySubstageYear string, 
+                BudgetaryKBK string, 
+                BudgetaryPrice string)
+        OUTER APPLY
+            new Microsoft.Analytics.Samples.Formats.Xml.XmlApplier ("Products","/",new SQL.MAP<string, string>{
+          {"/abc/oos:product/oos:sid", "ProductSid"},
+          {"/abc/oos:product/oos:OKPD/oos:code", "ProductOKPDCode"},
+          {"/abc/oos:product/oos:OKPD/oos:name", "ProductOKPDName"},
+          {"/abc/oos:product/oos:name", "ProductName"},
+          {"/abc/oos:product/oos:OKEI/oos:code", "ProductOKEICode"},
+          {"/abc/oos:product/oos:OKEI/oos:nationalCode", "ProductOKEINationalCode"},
+          {"/abc/oos:product/oos:price", "ProductPrice"}
+          },@namespaces) AS pp(
+                ProductSid string, 
+                ProductOKPDCode string, 
+                ProductOKPDName string, 
+                ProductName string, 
+                ProductOKEICode string, 
+                ProductOKEINationalCode string, 
+                ProductPrice string);
+
+OUTPUT @data 
+TO @"/mynewfolder/test2.csv" 
+USING Outputters.Csv();

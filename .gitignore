@@ -3,3 +3,5 @@
 bin/
 obj/
 *.usqlproj.user
+packages/
+TestResults/

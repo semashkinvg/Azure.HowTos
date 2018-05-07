@@ -1,0 +1,45 @@
+﻿
+REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
+DECLARE @namespaces = new SQL.MAP<string, string>{
+          {"oos", "http://zakupki.gov.ru/oos/types/1"},
+          {"x", "http://zakupki.gov.ru/oos/export/1"}
+          };
+
+@xml =
+    EXTRACT Id string,
+            RegistrationNumber string,
+            Finances string,
+            Products string
+    FROM @"d:\Development\github\Azure.HowTos\DataLake.Samples\GovermentContracts\Data\bigFile.xml"
+    USING new Microsoft.Analytics.Samples.Formats.Xml.XmlDomExtractor("x:contract",
+          new SQL.MAP<string, string>{
+          {"oos:id", "Id"},
+          {"oos:regNum", "RegistrationNumber"},
+          {"oos:finances", "Finances"},
+          {"oos:products", "Products"}
+          },@namespaces);
+@prepareData =
+    SELECT c.Id,
+           c.RegistrationNumber,
+           "<abc>"+c.Finances+"</abc>" AS Finances,
+           "<abc>"+c.Products+"</abc>" AS Products
+    FROM @xml AS c;
+
+@data = SELECT c.Id,
+            c.RegistrationNumber,
+            fp.BudgetaryMonth,
+            fp.BudgetaryYear
+        FROM @prepareData AS c
+        CROSS APPLY
+            new Microsoft.Analytics.Samples.Formats.Xml.XmlApplier ("Finances","abc",new SQL.MAP<string, string>{
+          {"oos:financeSource", "FinanceSource"},
+          {"oos:budgetLevel", "BudgetLevel"},
+          {"oos:budgetary/oos:month", "BudgetaryMonth"},
+          {"oos:budgetary/oos:year", "BudgetaryYear"}
+          },@namespaces) AS fp(
+                FinanceSource string, 
+                BudgetLevel string, 
+                BudgetaryMonth string, 
+                BudgetaryYear string);
+        
+OUTPUT @xml TO @"d:\Development\github\Azure.HowTos\DataLake.Samples\GovermentContracts\Data\data.csv" USING Outputters.Csv();

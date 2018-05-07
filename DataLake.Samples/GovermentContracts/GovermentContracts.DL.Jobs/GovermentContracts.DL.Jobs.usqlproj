@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>97e82410-8996-47ae-b1d6-541234f1b45b</ProjectGuid>
+    <OutputType>File</OutputType>
+    <AssemblyName>Algebra.xml</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <Name>GovermentContracts.DL.Jobs</Name>
+    <RootNamespace>GovermentContracts.DL.Jobs</RootNamespace>
+    <RuntimeVersion>default</RuntimeVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>false</DebugSymbols>
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Script Include="Script_remote3.usql" />
+    <Script Include="Script_remote2.usql" />
+    <Script Include="Script_remote.usql" />
+    <Script Include="Script_local.usql" />
+    <ScriptCode Include="Script_remote.usql.cs">
+      <DependentUpon>Script_remote.usql</DependentUpon>
+    </ScriptCode>
+    <ScriptCode Include="Script_local.usql.cs">
+      <DependentUpon>Script_local.usql</DependentUpon>
+    </ScriptCode>
+    <ScriptCode Include="Script_remote2.usql.cs">
+      <DependentUpon>Script_remote2.usql</DependentUpon>
+    </ScriptCode>
+  </ItemGroup>
+  <Import Project="$(AppData)\Microsoft\DataLake\MsBuild\1.0\Usql.targets" Condition="'$(BuildingInsideVisualStudio)' == 'true'" />
+  <!--target for CICD command line build added by project migration tool-->
+  <Import Project="USqlSDKBuild.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true' And  Exists('USqlSDKBuild.targets')" />
+  <Import Project="$(USQLSDKPath)\USqlSDKBuild.targets" Condition="'$(BuildingInsideVisualStudio)' != 'true' And !Exists('USqlSDKBuild.targets') And '$(USQLSDKPath)' != '' And Exists('$(USQLSDKPath)\USqlSDKBuild.targets')" />
+</Project>

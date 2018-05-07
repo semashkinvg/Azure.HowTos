@@ -1,0 +1,92 @@
+﻿// An example of my executing my own XmlExtractor. 
+// The reason of taking efforts on this implementation is it's imposible to get Products with Microsoft.Analytics.Samples.Formats.Xml.XmlDomExtract when too much products inside
+REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
+REFERENCE ASSEMBLY [GovermentContracts.Dl.Libs];
+
+@xml =
+    EXTRACT Id string,
+            ExternalId string,
+            PublishDate string,
+            VersionNumber string,
+            
+            CustomerRegNum string,
+            CustomerFullName string,
+            CustomerInn string,
+            CustomerKpp string,
+            
+            ProtocolDate string,
+            DocumentCode string,
+            SignDate string,
+            RegistrationNumber string,
+            Number string,
+            
+            Price string,
+            Products SQL.ARRAY<string>
+    FROM @"/mynewfolder/Samarskaja_obl/{*}.xml"
+    USING new GovermentContracts.Dl.Libs.XmlExtractor("//contract",
+          new SQL.MAP<string, string>{
+          {"id", "Id"},
+          {"externalId", "ExternalId"},
+          {"publishDate", "PublishDate"},
+          {"versionNumber", "VersionNumber"},
+                                         
+          {"customer/regNum", "CustomerRegNum"},
+          {"customer/fullName", "CustomerFullName"},
+          {"customer/inn", "CustomerInn"},
+          {"customer/kpp", "CustomerKpp"},
+                                         
+          {"protocolDate", "ProtocolDate"},
+          {"documentCode", "DocumentCode"},
+          {"signDate", "SignDate"},
+          {"regNum", "RegistrationNumber"},
+          {"number", "Number"},
+          {"priceInfo/price", "Price"},
+          {"products", "Products"}
+          });
+
+@explodedData =  SELECT c.Id,
+            c.ExternalId,
+            c.PublishDate,
+            c.VersionNumber,
+            
+            c.CustomerRegNum,
+            c.CustomerFullName,
+            c.CustomerInn,
+            c.CustomerKpp,
+            
+            c.ProtocolDate,
+            c.DocumentCode,
+            c.SignDate,
+            c.RegistrationNumber,
+            c.Number,
+            
+            Price,
+            psid.Value AS ProductSid,
+            pOKPDCode.Value AS ProductOKPDCode,
+            pOKPDName.Value AS ProductOKPDName,
+            pOKPD2Code.Value AS ProductOKPD2Code,
+            pOKPD2Name.Value AS ProductOKPD2Name,
+            pName.Value AS ProductName,
+            pOKEICode.Value AS ProductOKEICode,
+            pOKEINationalCode.Value AS ProductOKEINationalCode,
+            pPrice.Value AS ProductPrice,
+            pQuantity.Value AS ProductQuantity,
+            pSum.Value AS ProductSum
+            
+    FROM @xml AS c
+    CROSS APPLY EXPLODE (c.Products) AS Product(Xml)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//s")) AS psid(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//o/c")) AS pOKPDCode(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//o/n")) AS pOKPDName(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//o2/c")) AS pOKPD2Code(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//o2/n")) AS pOKPD2Name(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//name")) AS pName(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//ok/c")) AS pOKEICode(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//ok/nc")) AS pOKEINationalCode(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//price")) AS pPrice(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//quantity")) AS pQuantity(Value)
+    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//sum")) AS pSum(Value);
+
+OUTPUT @explodedData 
+TO @"/mynewfolder/test3.csv" 
+USING Outputters.Csv(outputHeader:true,quoting:true);
