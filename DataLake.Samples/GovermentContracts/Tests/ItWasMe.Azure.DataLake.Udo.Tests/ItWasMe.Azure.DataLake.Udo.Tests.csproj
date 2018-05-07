@@ -7,8 +7,8 @@
     <ProjectGuid>{E7C2901C-675C-4806-A93D-44CDA4F91675}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GovermentContracts.Dl.Libs.Tests</RootNamespace>
-    <AssemblyName>GovermentContracts.Dl.Libs.Tests</AssemblyName>
+    <RootNamespace>ItWasMe.Azure.DataLake.Udo.Tests</RootNamespace>
+    <AssemblyName>ItWasMe.Azure.DataLake.Udo.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{4D4E14FB-86F2-46A5-8BFB-41569A68D9E8};{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -76,13 +76,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\GovermentContracts.DL.Libs\GovermentContracts.Dl.Libs.csproj">
-      <Project>{88bea6a9-c80f-46ea-b18b-1013555d5328}</Project>
-      <Name>GovermentContracts.Dl.Libs</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\..\ItWasMe.Azure.DataLake.Udo\ItWasMe.Azure.DataLake.Udo.csproj">
+      <Project>{88bea6a9-c80f-46ea-b18b-1013555d5328}</Project>
+      <Name>ItWasMe.Azure.DataLake.Udo</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

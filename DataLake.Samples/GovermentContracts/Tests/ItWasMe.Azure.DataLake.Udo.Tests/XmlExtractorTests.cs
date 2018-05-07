@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using GovermentContracts.Dl.Libs;
 using Microsoft.Analytics.Interfaces;
 using Microsoft.Analytics.Types.Sql;
 using Microsoft.Analytics.UnitTest;
@@ -9,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace GovermentContracts.DL.Libs.Tests
+namespace ItWasMe.Azure.DataLake.Udo.Tests
 {
 	[TestClass]
 	public class XmlExtractorTests

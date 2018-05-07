@@ -1,7 +1,7 @@
 ﻿// An example of my executing my own XmlExtractor. 
 // The reason of taking efforts on this implementation is it's imposible to get Products with Microsoft.Analytics.Samples.Formats.Xml.XmlDomExtract when too much products inside
 REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
-REFERENCE ASSEMBLY [GovermentContracts.Dl.Libs];
+REFERENCE ASSEMBLY [ItWasMe.Azure.DataLake.Udo];
 
 @xml =
     EXTRACT Id string,
@@ -23,7 +23,7 @@ REFERENCE ASSEMBLY [GovermentContracts.Dl.Libs];
             Price string,
             Products SQL.ARRAY<string>
     FROM @"/mynewfolder/Samarskaja_obl/{*}.xml"
-    USING new GovermentContracts.Dl.Libs.XmlExtractor("//contract",
+    USING new ItWasMe.Azure.DataLake.Udo.XmlExtractor("//contract",
           new SQL.MAP<string, string>{
           {"id", "Id"},
           {"externalId", "ExternalId"},

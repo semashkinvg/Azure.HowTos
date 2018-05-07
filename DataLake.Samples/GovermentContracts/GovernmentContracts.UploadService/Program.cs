@@ -2,7 +2,7 @@
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest.Azure.Authentication;
 
-namespace GovermentContracts.UploadService
+namespace GovernmentContracts.UploadService
 {
 	class Program
 	{

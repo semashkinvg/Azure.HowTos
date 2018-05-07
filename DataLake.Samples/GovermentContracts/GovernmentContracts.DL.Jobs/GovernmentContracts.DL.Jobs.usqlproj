@@ -8,7 +8,7 @@
     <OutputType>File</OutputType>
     <AssemblyName>Algebra.xml</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <Name>GovermentContracts.DL.Jobs</Name>
+    <Name>GovernmentContracts.DL.Jobs</Name>
     <RootNamespace>GovermentContracts.DL.Jobs</RootNamespace>
     <RuntimeVersion>default</RuntimeVersion>
   </PropertyGroup>
@@ -21,19 +21,25 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Script Include="Script_remote3.usql" />
-    <Script Include="Script_remote2.usql" />
-    <Script Include="Script_remote.usql" />
-    <Script Include="Script_local.usql" />
-    <ScriptCode Include="Script_remote.usql.cs">
-      <DependentUpon>Script_remote.usql</DependentUpon>
+    <Script Include="XmlParsingSamples\Script_local.usql" />
+    <Script Include="XmlParsingSamples\Script_remote.usql" />
+    <Script Include="XmlParsingSamples\Script_remote2.usql" />
+    <Script Include="XmlParsingSamples\Script_remote3.usql" />
+    <ScriptCode Include="XmlParsingSamples\Script_local.usql.cs">
+      <DependentUpon>XmlParsingSamples\Script_local.usql</DependentUpon>
     </ScriptCode>
-    <ScriptCode Include="Script_local.usql.cs">
-      <DependentUpon>Script_local.usql</DependentUpon>
+    <ScriptCode Include="XmlParsingSamples\Script_remote.usql.cs">
+      <DependentUpon>XmlParsingSamples\Script_remote.usql</DependentUpon>
     </ScriptCode>
-    <ScriptCode Include="Script_remote2.usql.cs">
-      <DependentUpon>Script_remote2.usql</DependentUpon>
+    <ScriptCode Include="XmlParsingSamples\Script_remote2.usql.cs">
+      <DependentUpon>XmlParsingSamples\Script_remote2.usql</DependentUpon>
     </ScriptCode>
+    <ScriptCode Include="XmlParsingSamples\Script_remote3.usql.cs">
+      <DependentUpon>XmlParsingSamples\Script_remote3.usql</DependentUpon>
+    </ScriptCode>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="XmlParsingSamples" />
   </ItemGroup>
   <Import Project="$(AppData)\Microsoft\DataLake\MsBuild\1.0\Usql.targets" Condition="'$(BuildingInsideVisualStudio)' == 'true'" />
   <!--target for CICD command line build added by project migration tool-->

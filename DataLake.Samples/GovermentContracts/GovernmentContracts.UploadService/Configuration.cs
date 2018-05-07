@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.IO;
 
-namespace GovermentContracts.UploadService
+namespace GovernmentContracts.UploadService
 {
 	public static class Configuration
 	{

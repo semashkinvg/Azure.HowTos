@@ -9,8 +9,8 @@
     <ProjectGuid>{88BEA6A9-C80F-46EA-B18B-1013555D5328}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>GovermentContracts.Dl.Libs</RootNamespace>
-    <AssemblyName>GovermentContracts.Dl.Libs</AssemblyName>
+    <RootNamespace>ItWasMe.Azure.DataLake.Udo</RootNamespace>
+    <AssemblyName>ItWasMe.Azure.DataLake.Udo</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

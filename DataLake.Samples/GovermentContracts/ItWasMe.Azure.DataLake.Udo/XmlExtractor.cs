@@ -7,7 +7,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 
-namespace GovermentContracts.Dl.Libs
+namespace ItWasMe.Azure.DataLake.Udo
 {
 
 	[SqlUserDefinedExtractor(AtomicFileProcessing = true)]
