@@ -1,0 +1,233 @@
+﻿USE DATABASE Gc;
+DROP PROCEDURE IF EXISTS Gc.dbo.usp_ContractsByRegion_E;
+CREATE PROCEDURE Gc.dbo.usp_ContractsByRegion_E(@Region string)  
+AS  
+BEGIN 
+    REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
+    REFERENCE ASSEMBLY [ItWasMe.Azure.DataLake.Udo];
+
+    @xml =
+        EXTRACT Id string,
+                ExternalId string,
+                PublishDate string,
+                VersionNumber string,
+            
+                CustomerRegNum string,
+                CustomerFullName string,
+                CustomerInn string,
+                CustomerKpp string,
+            
+                ProtocolDate string,
+                DocumentCode string,
+                SignDate string,
+                RegistrationNumber string,
+                Number string,
+            
+                PriceInfoPrice string,
+                Price string,
+                Products SQL.ARRAY<string>,
+            
+                FoundationNotificationNumber string,
+                FoundationLotNumber string,
+                FoundationPlacing string,
+            
+                CurrencyCode string,
+                CurrencyName string,
+            
+                ExecutionDateMonth string,
+                ExecutionDateYear string,
+            
+                FinancesFinanceSource string,
+                FinancesBudgetLevel string,
+                FinancesBudgetary SQL.ARRAY<string>,
+                FinancesBudget SQL.ARRAY<string>,
+            
+                SuppliersSupplier SQL.ARRAY<string>
+        FROM @"/mynewfolder/"+@Region+"/{*}.xml"
+        USING new ItWasMe.Azure.DataLake.Udo.XmlExtractor("//contract",
+              new SQL.MAP<string, string>{
+              {"id", "Id"},
+              {"externalId", "ExternalId"},
+              {"publishDate", "PublishDate"},
+              {"versionNumber", "VersionNumber"},
+                                         
+              {"customer/regNum", "CustomerRegNum"},
+              {"customer/fullName", "CustomerFullName"},
+              {"customer/inn", "CustomerInn"},
+              {"customer/kpp", "CustomerKpp"},
+                                         
+              {"protocolDate", "ProtocolDate"},
+              {"documentCode", "DocumentCode"},
+              {"signDate", "SignDate"},
+              {"regNum", "RegistrationNumber"},
+              {"number", "Number"},
+              {"priceInfo/price", "PriceInfoPrice"},
+              {"price", "Price"},
+              {"products/p", "Products"},
+                                         
+              {"foundation/oosOrder/notificationNumber", "FoundationNotificationNumber"},
+              {"foundation/oosOrder/lotNumber", "FoundationLotNumber"},
+              {"foundation/oosOrder/placing", "FoundationPlacing"},
+                                         
+              {"currency/code", "CurrencyCode"},
+              {"currency/name", "CurrencyName"},
+                                         
+              {"executionDate/month", "ExecutionDateMonth"},
+              {"executionDate/year", "ExecutionDateYear"},
+                                         
+              {"finances/financeSource", "FinancesFinanceSource"},
+              {"finances/budgetLevel", "FinancesBudgetLevel"},
+              {"finances/budgetary", "FinancesBudgetary"},
+              {"finances/budget", "FinancesBudget"},
+                                         
+              {"suppliers/supplier", "SuppliersSupplier"}
+              });
+
+    @suppliers =
+        SELECT c.Id,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//participantType").FirstOrDefault() AS SupplierParticipantType,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//inn").FirstOrDefault() AS SupplierInn,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//kpp").FirstOrDefault() AS SupplierKpp,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//legalForm/code").FirstOrDefault() AS SupplierLegalFormCode,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//legalForm/singularName").FirstOrDefault() AS SupplierLegalFormSingularName,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//organizationName").FirstOrDefault() AS SupplierOrganizationName,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//country/countryCode").FirstOrDefault() AS SupplierCountryCode,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//country/countryFullName").FirstOrDefault() AS SupplierCountryFullName,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//factualAddress").FirstOrDefault() AS SupplierFactualAddress,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//postAddress").FirstOrDefault() AS SupplierPostAddress,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//contactInfo/lastName").FirstOrDefault() AS SupplierContactInfoLastName,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//contactInfo/firstName").FirstOrDefault() AS SupplierContactInfoFirstName,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//contactInfo/middleName").FirstOrDefault() AS SupplierContactInfoMiddleName,
+               Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//contactPhone").FirstOrDefault() AS SupplierContactPhone
+        FROM @xml AS c
+             CROSS APPLY
+                 EXPLODE(c.SuppliersSupplier) AS Supplier(Xml);
+
+    @products =
+        SELECT c.Id,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//s").FirstOrDefault()  AS psid,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o/c").FirstOrDefault()  AS pOKPDCode,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o/n").FirstOrDefault()  AS pOKPDName,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o2/c").FirstOrDefault()  AS pOKPD2Code,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o2/n").FirstOrDefault()  AS pOKPD2Name,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//name").FirstOrDefault()  AS pName,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//ok/c").FirstOrDefault()  AS pOKEICode,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//ok/nc").FirstOrDefault()  AS pOKEINationalCode,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//price").FirstOrDefault()  AS pPrice,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//quantity").FirstOrDefault()  AS pQuantity,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//sum").FirstOrDefault()  AS pSum
+        FROM @xml AS c
+             CROSS APPLY
+                 EXPLODE(c.Products) AS Product(Xml);
+
+    @budgetary =
+        SELECT c.Id,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//month").FirstOrDefault()  AS BudgetaryMonth,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//year").FirstOrDefault()  AS BudgetaryYear,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//substageMonth").FirstOrDefault()  AS BudgetarySubstageMonth,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//substageYear").FirstOrDefault()  AS BudgetarySubstageYear,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//KBK").FirstOrDefault()  AS BudgetaryKBK,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//price").FirstOrDefault()  AS BudgetaryPrice,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//comment").FirstOrDefault()  AS BudgetaryComment
+        FROM @xml AS c
+             CROSS APPLY
+                 EXPLODE(c.FinancesBudgetary) AS Budgetary(Xml);
+
+    @budget =
+        SELECT c.Id,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budget.Xml, "//code").FirstOrDefault()  AS BudgetCode,
+                 Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budget.Xml, "//name").FirstOrDefault()  AS BudgetName
+        FROM @xml AS c
+             CROSS APPLY
+                 EXPLODE(c.FinancesBudget) AS Budget(Xml);
+
+    @explodedData =
+        SELECT c.Id,
+               c.ExternalId,
+               c.PublishDate,
+               c.VersionNumber,
+
+               c.CustomerRegNum,
+               (c.CustomerFullName ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS CustomerFullName,
+               c.CustomerInn,
+               c.CustomerKpp,
+
+               c.ProtocolDate,
+               c.DocumentCode,
+               c.SignDate,
+               //            Local.SimpleOperations.FormatDate(c.SignDate) AS FormatedSignDate,
+               c.RegistrationNumber,
+               c.Number,
+
+               PriceInfoPrice,
+               Price,
+               p.psid AS ProductSid,
+               p.pOKPDCode AS ProductOKPDCode,
+               (p.pOKPDName ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS ProductOKPDName,
+               p.pOKPD2Code AS ProductOKPD2Code,
+               (p.pOKPD2Name ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS ProductOKPD2Name,
+               (p.pName ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS ProductName,
+               p.pOKEICode AS ProductOKEICode,
+               (p.pOKEINationalCode ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS ProductOKEINationalCode,
+               p.pPrice AS ProductPrice,
+               p.pQuantity AS ProductQuantity,
+               p.pSum AS ProductSum,
+
+
+               FoundationNotificationNumber,
+               FoundationLotNumber,
+               FoundationPlacing,
+
+               CurrencyCode,
+               CurrencyName,
+
+               ExecutionDateMonth,
+               ExecutionDateYear,
+
+               FinancesFinanceSource,
+               FinancesBudgetLevel,
+
+               s.SupplierParticipantType,
+               s.SupplierInn,
+               s.SupplierKpp,
+               s.SupplierCountryCode,
+               s.SupplierCountryFullName,
+               s.SupplierFactualAddress,
+               s.SupplierPostAddress,
+               s.SupplierContactInfoLastName,
+               s.SupplierContactInfoFirstName,
+               s.SupplierContactInfoMiddleName,
+               s.SupplierContactPhone,
+               s.SupplierLegalFormCode,
+               s.SupplierLegalFormSingularName,
+               s.SupplierOrganizationName,
+           
+               b.BudgetaryMonth,
+                b.BudgetaryYear,
+                b.BudgetarySubstageMonth,
+                b.BudgetarySubstageYear,
+                b.BudgetaryKBK,
+                b.BudgetaryPrice,
+                b.BudgetaryComment,
+           
+                bud.BudgetCode,
+                bud.BudgetName,
+               @Region AS Region
+        FROM @xml AS c
+             LEFT JOIN
+                 @suppliers AS s
+             ON s.Id == c.Id
+             LEFT JOIN
+                 @products AS p
+             ON p.Id == c.Id
+             LEFT JOIN
+                 @budgetary AS b
+             ON b.Id == c.Id
+             LEFT JOIN
+                 @budget AS bud
+             ON bud.Id == c.Id;
+
+    OUTPUT @explodedData 
+    TO @"/mynewfolder/output/"+@Region+".csv" 
+    USING Outputters.Csv(outputHeader:true,quoting:true);
+END;

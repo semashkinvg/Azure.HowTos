@@ -1,5 +1,7 @@
 ﻿// An example of my executing my own XmlExtractor. 
 // The reason of taking efforts on this implementation is it's imposible to get Products with Microsoft.Analytics.Samples.Formats.Xml.XmlDomExtract when too much products inside
+DECLARE EXTERNAL @Region string = "Samarskaja_obl";
+
 REFERENCE ASSEMBLY [Microsoft.Analytics.Samples.Formats];
 REFERENCE ASSEMBLY [ItWasMe.Azure.DataLake.Udo];
 
@@ -20,9 +22,27 @@ REFERENCE ASSEMBLY [ItWasMe.Azure.DataLake.Udo];
             RegistrationNumber string,
             Number string,
             
+            PriceInfoPrice string,
             Price string,
-            Products SQL.ARRAY<string>
-    FROM @"/mynewfolder/Samarskaja_obl/{*}.xml"
+            Products SQL.ARRAY<string>,
+            
+            FoundationNotificationNumber string,
+            FoundationLotNumber string,
+            FoundationPlacing string,
+            
+            CurrencyCode string,
+            CurrencyName string,
+            
+            ExecutionDateMonth string,
+            ExecutionDateYear string,
+            
+            FinancesFinanceSource string,
+            FinancesBudgetLevel string,
+            FinancesBudgetary SQL.ARRAY<string>,
+            FinancesBudget SQL.ARRAY<string>,
+            
+            SuppliersSupplier SQL.ARRAY<string>
+    FROM @"/mynewfolder/"+@Region+"/bigFile0.xml"
     USING new ItWasMe.Azure.DataLake.Udo.XmlExtractor("//contract",
           new SQL.MAP<string, string>{
           {"id", "Id"},
@@ -40,53 +60,215 @@ REFERENCE ASSEMBLY [ItWasMe.Azure.DataLake.Udo];
           {"signDate", "SignDate"},
           {"regNum", "RegistrationNumber"},
           {"number", "Number"},
-          {"priceInfo/price", "Price"},
-          {"products", "Products"}
+          {"priceInfo/price", "PriceInfoPrice"},
+          {"price", "Price"},
+          {"products/p", "Products"},
+                                         
+          {"foundation/oosOrder/notificationNumber", "FoundationNotificationNumber"},
+          {"foundation/oosOrder/lotNumber", "FoundationLotNumber"},
+          {"foundation/oosOrder/placing", "FoundationPlacing"},
+                                         
+          {"currency/code", "CurrencyCode"},
+          {"currency/name", "CurrencyName"},
+                                         
+          {"executionDate/month", "ExecutionDateMonth"},
+          {"executionDate/year", "ExecutionDateYear"},
+                                         
+          {"finances/financeSource", "FinancesFinanceSource"},
+          {"finances/budgetLevel", "FinancesBudgetLevel"},
+          {"finances/budgetary", "FinancesBudgetary"},
+          {"finances/budget", "FinancesBudget"},
+                                         
+          {"suppliers/supplier", "SuppliersSupplier"}
           });
 
-@explodedData =  SELECT c.Id,
-            c.ExternalId,
-            c.PublishDate,
-            c.VersionNumber,
-            
-            c.CustomerRegNum,
-            c.CustomerFullName,
-            c.CustomerInn,
-            c.CustomerKpp,
-            
-            c.ProtocolDate,
-            c.DocumentCode,
-            c.SignDate,
-            c.RegistrationNumber,
-            c.Number,
-            
-            Price,
-            psid.Value AS ProductSid,
-            pOKPDCode.Value AS ProductOKPDCode,
-            pOKPDName.Value AS ProductOKPDName,
-            pOKPD2Code.Value AS ProductOKPD2Code,
-            pOKPD2Name.Value AS ProductOKPD2Name,
-            pName.Value AS ProductName,
-            pOKEICode.Value AS ProductOKEICode,
-            pOKEINationalCode.Value AS ProductOKEINationalCode,
-            pPrice.Value AS ProductPrice,
-            pQuantity.Value AS ProductQuantity,
-            pSum.Value AS ProductSum
-            
+@suppliers =
+    SELECT c.Id,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//participantType").FirstOrDefault() AS ParticipantType,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//inn").FirstOrDefault() AS Inn,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//kpp").FirstOrDefault() AS Kpp,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//country/countryCode").FirstOrDefault() AS CountryCode,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//country/countryFullName").FirstOrDefault() AS CountryFullName,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//factualAddress").FirstOrDefault() AS FactualAddress,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//postAddress").FirstOrDefault() AS PostAddress,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//contactInfo/lastName").FirstOrDefault() AS ContactInfoLastName,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//contactInfo/firstName").FirstOrDefault() AS ContactInfoFirstName,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//contactInfo/middleName").FirstOrDefault() AS ContactInfoMiddleName,
+           Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Supplier.Xml, "//contactPhone").FirstOrDefault() AS ContactPhone
     FROM @xml AS c
-    CROSS APPLY EXPLODE (c.Products) AS Product(Xml)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//s")) AS psid(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//o/c")) AS pOKPDCode(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//o/n")) AS pOKPDName(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//o2/c")) AS pOKPD2Code(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//o2/n")) AS pOKPD2Name(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//name")) AS pName(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//ok/c")) AS pOKEICode(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//ok/nc")) AS pOKEINationalCode(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//price")) AS pPrice(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//quantity")) AS pQuantity(Value)
-    OUTER APPLY EXPLODE (Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml,"//sum")) AS pSum(Value);
+         CROSS APPLY
+             EXPLODE(c.SuppliersSupplier) AS Supplier(Xml);
 
-OUTPUT @explodedData 
-TO @"/mynewfolder/test3.csv" 
+@products =
+    SELECT c.Id,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//s").FirstOrDefault()  AS psid,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o/c").FirstOrDefault()  AS pOKPDCode,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o/n").FirstOrDefault()  AS pOKPDName,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o2/c").FirstOrDefault()  AS pOKPD2Code,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o2/n").FirstOrDefault()  AS pOKPD2Name,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//name").FirstOrDefault()  AS pName,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//ok/c").FirstOrDefault()  AS pOKEICode,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//ok/nc").FirstOrDefault()  AS pOKEINationalCode,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//price").FirstOrDefault()  AS pPrice,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//quantity").FirstOrDefault()  AS pQuantity,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//sum").FirstOrDefault()  AS pSum
+    FROM @xml AS c
+         CROSS APPLY
+             EXPLODE(c.Products) AS Product(Xml);
+
+@budgetary =
+    SELECT c.Id,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//month").FirstOrDefault()  AS BudgetaryMonth,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//year").FirstOrDefault()  AS BudgetaryYear,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//substageMonth").FirstOrDefault()  AS BudgetarySubstageMonth,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//substageYear").FirstOrDefault()  AS BudgetarySubstageYear,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//KBK").FirstOrDefault()  AS BudgetaryKBK,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//price").FirstOrDefault()  AS BudgetaryPrice,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budgetary.Xml, "//comment").FirstOrDefault()  AS BudgetaryComment
+    FROM @xml AS c
+         CROSS APPLY
+             EXPLODE(c.FinancesBudgetary) AS Budgetary(Xml);
+
+@budget =
+    SELECT c.Id,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budget.Xml, "//code").FirstOrDefault()  AS BudgetCode,
+             Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Budget.Xml, "//name").FirstOrDefault()  AS BudgetName
+    FROM @xml AS c
+         CROSS APPLY
+             EXPLODE(c.FinancesBudget) AS Budget(Xml);
+
+@explodedData =
+    SELECT 
+    
+        ROW_NUMBER() 
+            OVER (ORDER BY c.Id) AS RowNumber,
+        c.Id,
+           c.ExternalId,
+           c.PublishDate,
+           c.VersionNumber,
+
+           c.CustomerRegNum,
+           (c.CustomerFullName ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS CustomerFullName,
+           c.CustomerInn,
+           c.CustomerKpp,
+
+           c.ProtocolDate,
+           c.DocumentCode,
+           c.SignDate,
+           //            Local.SimpleOperations.FormatDate(c.SignDate) AS FormatedSignDate,
+           c.RegistrationNumber,
+           c.Number,
+
+           PriceInfoPrice,
+           Price,
+           p.psid AS ProductSid,
+           p.pOKPDCode AS ProductOKPDCode,
+           (p.pOKPDName ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS ProductOKPDName,
+           p.pOKPD2Code AS ProductOKPD2Code,
+           (p.pOKPD2Name ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS ProductOKPD2Name,
+           (p.pName ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS ProductName,
+           p.pOKEICode AS ProductOKEICode,
+           (p.pOKEINationalCode ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty) AS ProductOKEINationalCode,
+           p.pPrice AS ProductPrice,
+           p.pQuantity AS ProductQuantity,
+           p.pSum AS ProductSum,
+
+
+           FoundationNotificationNumber,
+           FoundationLotNumber,
+           FoundationPlacing,
+
+           CurrencyCode,
+           CurrencyName,
+
+           ExecutionDateMonth,
+           ExecutionDateYear,
+
+           FinancesFinanceSource,
+           FinancesBudgetLevel,
+
+           s.ParticipantType,
+           s.Inn,
+           s.Kpp,
+           s.CountryCode,
+           s.CountryFullName,
+           s.FactualAddress,
+           s.PostAddress,
+           s.ContactInfoLastName,
+           s.ContactInfoFirstName,
+           s.ContactInfoMiddleName,
+           s.ContactPhone,
+           
+           b.BudgetaryMonth,
+            b.BudgetaryYear,
+            b.BudgetarySubstageMonth,
+            b.BudgetarySubstageYear,
+            b.BudgetaryKBK,
+            b.BudgetaryPrice,
+            b.BudgetaryComment,
+           
+            bud.BudgetCode,
+            bud.BudgetName,
+           @Region AS Region
+    FROM @xml AS c
+         LEFT OUTER JOIN
+             @suppliers AS s
+         ON s.Id == c.Id
+         LEFT OUTER JOIN
+             @products AS p
+         ON p.Id == c.Id
+         LEFT OUTER JOIN
+             @budgetary AS b
+         ON b.Id == c.Id
+         LEFT OUTER JOIN
+             @budget AS bud
+         ON bud.Id == c.Id;
+//         CROSS APPLY
+//             EXPLODE(c.Products) AS Product(Xml)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//s")) AS psid(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o/c")) AS pOKPDCode(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o/n")) AS pOKPDName(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o2/c")) AS pOKPD2Code(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//o2/n")) AS pOKPD2Name(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//name")) AS pName(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//ok/c")) AS pOKEICode(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//ok/nc")) AS pOKEINationalCode(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//price")) AS pPrice(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//quantity")) AS pQuantity(Value)
+//         OUTER APPLY
+//             EXPLODE(Microsoft.Analytics.Samples.Formats.Xml.XPath.FindNodes(Product.Xml, "//sum")) AS pSum(Value);
+
+@filteredData = SELECT 
+                *
+                FROM @explodedData AS ed
+                WHERE ed.RowNumber  < 10000;
+
+OUTPUT @filteredData
+TO @"/mynewfolder/output/"+@Region+".csv" 
+USING Outputters.Csv(outputHeader:true,quoting:true);
+
+OUTPUT @suppliers
+TO @"/mynewfolder/output/Suppliers.csv" 
+USING Outputters.Csv(outputHeader:true,quoting:true);
+
+OUTPUT @products
+TO @"/mynewfolder/output/products.csv" 
+USING Outputters.Csv(outputHeader:true,quoting:true);
+
+OUTPUT @budgetary
+TO @"/mynewfolder/output/budgetary.csv" 
+USING Outputters.Csv(outputHeader:true,quoting:true);
+
+OUTPUT @budget
+TO @"/mynewfolder/output/budget.csv" 
 USING Outputters.Csv(outputHeader:true,quoting:true);

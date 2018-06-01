@@ -102,7 +102,7 @@ namespace ItWasMe.Azure.DataLake.Udo.Tests
 				{
 					new KeyValuePair<string, string>("id", "Id"),
 					new KeyValuePair<string, string>("regNum", "RegistrationNumber"),
-					new KeyValuePair<string, string>("products", "Products"),
+					new KeyValuePair<string, string>("products/p", "Products"),
 				});
 
 			var result = ExecuteExtract(xml, "//contract", mappings,

@@ -1,0 +1,87 @@
+﻿{
+  "$schema": "http://datafactories.schema.management.azure.com/vsschemas/V1/Microsoft.DataFactory.Config.json",
+  "name": "Pipeline-Load Contracts",
+  "properties": {
+    "activities": [
+      {
+        "name": "Copy-Contracts To Raw",
+        "type": "Copy",
+        "dependsOn": [
+          {
+            "activity": "USQL-LoadContracts",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "7.00:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false
+        },
+        "typeProperties": {
+          "source": {
+            "type": "AzureDataLakeStoreSource",
+            "recursive": true
+          },
+          "sink": {
+            "type": "SqlSink",
+            "writeBatchSize": 10000
+          },
+          "enableStaging": false,
+          "cloudDataMovementUnits": 0,
+          "translator": {
+            "type": "TabularTranslator",
+            "columnMappings": {
+              "\"Number\"": "RegNumber"
+            }
+          }
+        },
+        "userProperties": [
+          {
+            "name": "Source",
+            "value": "/import_scheme.csv"
+          },
+          {
+            "name": "Destination",
+            "value": "[dbo].[Contract]"
+          }
+        ],
+        "inputs": [
+          {
+            "referenceName": "ADLS_Connection_Contracts",
+            "type": "DatasetReference"
+          }
+        ],
+        "outputs": [
+          {
+            "referenceName": "MSSQL_RawContracts",
+            "type": "DatasetReference"
+          }
+        ]
+      },
+      {
+        "name": "USQL-LoadContracts",
+        "type": "DataLakeAnalyticsU-SQL",
+        "policy": {
+          "timeout": "7.00:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false
+        },
+        "typeProperties": {
+          "scriptPath": "Scripts/Script_remote3.usql",
+          "scriptLinkedService": {
+            "referenceName": "ALDS_Link_Contracts",
+            "type": "LinkedServiceReference"
+          }
+        },
+        "linkedServiceName": {
+          "referenceName": "AzureDataLakeAnalytics1",
+          "type": "LinkedServiceReference"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+﻿DECLARE EXTERNAL @Region string = "Samarskaja_obl";
+USE DATABASE Gc;
+Gc.dbo.usp_ContractsByRegion_E
+(
+    @Region
+);

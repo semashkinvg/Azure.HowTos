@@ -58,7 +58,7 @@ namespace ItWasMe.Azure.DataLake.Udo
 						if (column.Type == typeof(SqlArray<string>))
 						{
 							output.Set(columnPath.Value, new SqlArray<string>(
-								element.XPathSelectElement(columnPath.Key, _namespaceManager)?.Elements().Select(a => a.ToString())));
+								element.XPathSelectElements(columnPath.Key, _namespaceManager).Select(a => a.ToString())));
 						}
 						else
 						{

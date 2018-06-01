@@ -21,10 +21,22 @@
     <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Script Include="Programmability\001 db\001_Create_GcDatabase.usql" />
+    <Script Include="Programmability\002 sprocs\001_usp_ContractsByRegion_E.usql" />
+    <Script Include="Scripts\ExtractContracts.usql" />
     <Script Include="XmlParsingSamples\Script_local.usql" />
     <Script Include="XmlParsingSamples\Script_remote.usql" />
     <Script Include="XmlParsingSamples\Script_remote2.usql" />
     <Script Include="XmlParsingSamples\Script_remote3.usql" />
+    <ScriptCode Include="Programmability\001 db\001_Create_GcDatabase.usql.cs">
+      <DependentUpon>Programmability\001 db\001_Create_GcDatabase.usql</DependentUpon>
+    </ScriptCode>
+    <ScriptCode Include="Programmability\002 sprocs\001_usp_ContractsByRegion_E.usql.cs">
+      <DependentUpon>Programmability\002 sprocs\001_usp_ContractsByRegion_E.usql</DependentUpon>
+    </ScriptCode>
+    <ScriptCode Include="Scripts\ExtractContracts.usql.cs">
+      <DependentUpon>Scripts\ExtractContracts.usql</DependentUpon>
+    </ScriptCode>
     <ScriptCode Include="XmlParsingSamples\Script_local.usql.cs">
       <DependentUpon>XmlParsingSamples\Script_local.usql</DependentUpon>
     </ScriptCode>
@@ -39,6 +51,10 @@
     </ScriptCode>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Scripts" />
+    <Folder Include="Programmability" />
+    <Folder Include="Programmability\001 db" />
+    <Folder Include="Programmability\002 sprocs" />
     <Folder Include="XmlParsingSamples" />
   </ItemGroup>
   <Import Project="$(AppData)\Microsoft\DataLake\MsBuild\1.0\Usql.targets" Condition="'$(BuildingInsideVisualStudio)' == 'true'" />
